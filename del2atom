@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+"""Grab the latest delicious.com links and turn them into an Atom feed"""
+
+import sys, re
+from subprocess import Popen, PIPE, STDOUT
+
+import xmltramp
+
+API_BASE = 'https://api.del.icio.us/v1/posts/'
+ATOM_NS = 'http://www.w3.org/2005/Atom'
+
+VIDEO_RE = re.compile(r'(?i)youtube\.com/watch\?')
+
+
+class DeliciousToAtom(object):
+
+    def __init__(self):
+        self.db_file = '/var/local/del2atom.latest'
+        try:
+            self.latest = open(self.db_file).read()
+        except (IOError, OSError):
+            self.latest = '2000-01-01'
+
+    def save_latest(self):
+        open(self.db_file, 'w').write(self.latest)
+
+    def curl(self, url):
+	p = Popen(
+	    ['/usr/bin/curl', '--netrc', '--silent', API_BASE + url],
+	    stdout=PIPE, stderr=PIPE
+	)
+	stdout, stderr = p.communicate()
+	if stderr or p.returncode:
+	    print "Error running curl: %s" % (stderr or p.returncode)
+	    sys.exit(2)
+	return xmltramp.parse(stdout)
+
+    def get_dates(self):
+	last = self.curl('update')
+	if last('time') <= self.latest:
+	    return []
+        dates = self.curl('dates')
+	return [d('date') for d in dates['date':] if d('date') >= self.latest]
+
+    def make_feed(self, user, links):
+	delicious = 'http://delicious.com/%s' % user
+	atom = xmltramp.Namespace(ATOM_NS)
+	f = xmltramp.Element(atom.feed, prefixes=atom._prefix(None))
+	f.title = u"%s’s delicious links" % user
+	f._new('author').name = user
+	f.link = {'href': delicious}
+	f.updated = ''		# put a placeholder here
+	f.id = delicious
+	f.link = {'rel': 'self', 'href': 'http://feeds.delicious.com/v2/rss/%s' % user}
+	for link in links:
+	    when = link('time')
+	    self.latest = max(self.latest, when)
+	    e = f._new('entry')
+	    e.title = link('description')
+	    e.updated = when
+	    e.id = 'http://delicious.com/url/%s' % link('hash')
+	    href = link('href')
+	    e.link = {'rel': 'alternate', 'type': 'text/html', 'href': href}
+	    if VIDEO_RE.search(href):
+		e['link':] = {'rel': 'enclosure', 'type': 'video/x-flash', 'href': href}
+	    if link('extended'):
+		e.summary = link('extended')
+	    for tag in link('tag').split():
+		e['category':] = {'scheme': delicious, 'term': tag}
+	f.updated = self.latest	# update the placeholder
+	return f.__repr__(1, 1)
+
+    def run(self, date=None):
+	if date:
+	    dates = [date]
+	    self.latest = ''
+	else:
+	    dates = self.get_dates()
+	links = []
+	for d in dates:
+	    day_links = self.curl('get?dt=' + d)
+	    user = day_links('user')
+	    links += [l for l in day_links if l('time') > self.latest]
+	if links:
+	    print self.make_feed(user, links).encode('ascii', 'xmlcharrefreplace')
+	if date is None:
+	    self.save_latest()
+
+if __name__ == '__main__':
+    if len(sys.argv) == 2:
+        DeliciousToAtom().run(sys.argv[1])
+    else:
+        DeliciousToAtom().run()
