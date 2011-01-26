@@ -84,7 +84,7 @@ class DeliciousToAtom(object):
 	    user = day_links('user')
 	    links += [l for l in day_links if l('time') > self.latest]
 	if links:
-	    print self.make_feed(user, links).encode('ascii', 'xmlcharrefreplace')
+	    print self.make_feed(user, links).encode('utf-8')
 	if date is None:
 	    self.save_latest()
 
