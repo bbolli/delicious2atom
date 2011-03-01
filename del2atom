@@ -31,18 +31,18 @@ class DeliciousToAtom(feed2atom.FeedToAtom):
     def filter(self, entry):
 	ts = feed2atom.isodate(entry.updated_parsed)
 	if ts > self.latest:
-	    self.new_latest = max(self.new_latest, ts)
-	    return True
+            self.new_latest = max(self.new_latest, ts)
+            return True
 
     def post_process(self, entry):
-	if entry.link.endswith('.jpg'):
-	    self.entry['link':] = {'rel': 'enclosure', 'type': 'image/jpg', 'href': entry.link}
-	elif entry.link.endswith('.png'):
-	    self.entry['link':] = {'rel': 'enclosure', 'type': 'image/png', 'href': entry.link}
-	elif entry.link.endswith('.mp3'):
-	    self.entry['link':] = {'rel': 'enclosure', 'type': 'audio/mp3', 'href': entry.link}
-	elif VIDEO_RE.search(entry.link):
-	    self.entry['link':] = {'rel': 'enclosure', 'type': 'video/x-flash', 'href': entry.link}
+        if entry.link.endswith('.jpg'):
+            self.entry['link':] = {'rel': 'enclosure', 'type': 'image/jpg', 'href': entry.link}
+        elif entry.link.endswith('.png'):
+            self.entry['link':] = {'rel': 'enclosure', 'type': 'image/png', 'href': entry.link}
+        elif entry.link.endswith('.mp3'):
+            self.entry['link':] = {'rel': 'enclosure', 'type': 'audio/mp3', 'href': entry.link}
+        elif VIDEO_RE.search(entry.link):
+            self.entry['link':] = {'rel': 'enclosure', 'type': 'video/x-flash', 'href': entry.link}
 
     def run(self, user):
 	feed = feedparser.parse(FEED_FMT % user)
