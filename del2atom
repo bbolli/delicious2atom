@@ -24,8 +24,9 @@ class DeliciousToAtom(feed2atom.FeedToAtom):
             self.latest = '2000-01-01'
 	self.new_latest = self.latest
 
-    def save_latest(self):
-        open(self.db_file, 'w').write(self.new_latest)
+    def __del__(self):
+        if self.new_latest > self.latest:
+            open(self.db_file, 'w').write(self.new_latest)
 
     def filter(self, entry):
 	ts = feed2atom.isodate(entry.updated_parsed)
@@ -46,7 +47,6 @@ class DeliciousToAtom(feed2atom.FeedToAtom):
     def run(self, user):
 	feed = feedparser.parse(FEED_FMT % user)
 	print self.convert(feed).encode('utf-8')
-	print >>sys.stderr, self.new_latest
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
