@@ -46,7 +46,13 @@ class DeliciousToAtom(feed2atom.FeedToAtom):
 
     def run(self, user):
 	feed = feedparser.parse(FEED_FMT % user)
-	print self.convert(feed).encode('utf-8')
+        try:
+            print self.convert(feed).encode('utf-8')
+        except AttributeError, KeyError:
+            import pprint
+            pprint.pprint(feed)
+            print
+            raise
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
