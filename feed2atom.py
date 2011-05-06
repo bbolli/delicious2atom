@@ -16,7 +16,9 @@ class FeedToAtom:
 	f = self.feed = xmltramp.Element(self.atom.feed, prefixes=self.atom._prefix(None))
 	f.title = feed.feed.title
 	f.link = feed.feed.link
-	f.updated = isodate(feed.updated)
+	u = feed.get('updated') or feed.feed.get('updated_parsed')
+	if u:
+	    f.updated = isodate(u)
 	f.id = feed.href
 	f.link = {'rel': 'self', 'href': feed.href}
 	for entry in feed.entries:
@@ -48,4 +50,4 @@ if __name__ == '__main__':
     import sys, feedparser
     c = FeedToAtom()
     for url in sys.argv[1:]:
-        print c.convert(feedparser.parse(url)).encode('utf-8')
+	print c.convert(feedparser.parse(url)).encode('utf-8')
