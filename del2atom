@@ -48,7 +48,7 @@ class DeliciousToAtom(feed2atom.FeedToAtom):
 	feed = feedparser.parse(FEED_FMT % user)
         try:
             print self.convert(feed).encode('utf-8')
-        except AttributeError, KeyError:
+        except:
             import pprint
             pprint.pprint(feed)
             print
