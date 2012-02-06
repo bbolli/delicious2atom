@@ -35,6 +35,7 @@ class DeliciousToAtom(feed2atom.FeedToAtom):
             return True
 
     def post_process(self, entry):
+        self.entry['category':] = {'scheme': 'http://drbeat.li', 'term': 'delicious-link'}
         if entry.link.endswith('.jpg'):
             self.entry['link':] = {'rel': 'enclosure', 'type': 'image/jpg', 'href': entry.link}
         elif entry.link.endswith('.png'):
