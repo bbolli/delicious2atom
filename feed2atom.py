@@ -14,6 +14,8 @@ class FeedToAtom:
 
     def convert(self, feed):
 	f = self.feed = xmltramp.Element(self.atom.feed, prefixes=self.atom._prefix(None))
+	if 'title' not in feed.feed:
+	    return ''
 	f.title = feed.feed.title
 	f.link = feed.feed.link
 	u = feed.get('updated') or feed.feed.get('updated_parsed')
@@ -25,15 +27,17 @@ class FeedToAtom:
 	    if not self.filter(entry):
 		continue
 	    e = self.entry = f._new('entry')
-	    e._new('author').name = entry.author
+	    if 'author' in entry:
+		e._new('author').name = entry.author
 	    e.title = entry.title
 	    e.updated = isodate(entry.updated_parsed)
 	    e.id = entry.id
 	    e.link = {'rel': 'alternate', 'type': 'text/html', 'href': entry.link}
 	    if 'summary' in entry:
 		e.summary = entry.summary
-	    for t in entry.tags:
-		e['category':] = {'scheme': t.scheme, 'term': t.term}
+	    if 'tags' in entry:
+		for t in entry.tags:
+		    e['category':] = {'scheme': t.scheme, 'term': t.term}
 	    self.post_process(entry)
 	return f.__repr__(1, 1)
 
